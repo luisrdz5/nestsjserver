@@ -4,9 +4,8 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'pg';
 
-import { User } from '../../database/entities/users/user.entity';
-import { UserRepository } from '../../database/entities/users/user.repository';
-import { Order } from '../../database/entities/users/order.entity';
+import { User } from '../entities/user.entity';
+import { Order } from '../entities/order.entity';
 import { CreateUserDto, UpdateUserDto } from '../dtos/user.dto';
 
 import { ProductsService } from './../../products/services/products.service';
@@ -17,8 +16,8 @@ export class UsersService {
   constructor(
     private productsService: ProductsService,
     private configService: ConfigService,
-    // @InjectRepository(User) private userRepo: Repository<User>,
-    private userRepo: UserRepository,
+    @Inject('PG') private clientPg: Client,
+    @InjectRepository(User) private userRepo: Repository<User>,
     private customersService: CustomersService,
   ) {}
 
@@ -65,5 +64,16 @@ export class UsersService {
       user,
       products: await this.productsService.findAll(),
     };
+  }
+
+  getTasks() {
+    return new Promise((resolve, reject) => {
+      this.clientPg.query('SELECT * FROM tasks', (err, res) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(res.rows);
+      });
+    });
   }
 }
